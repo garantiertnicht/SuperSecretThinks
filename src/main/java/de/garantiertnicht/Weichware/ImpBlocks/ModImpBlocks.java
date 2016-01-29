@@ -42,10 +42,11 @@ public class ModImpBlocks
     public void init(FMLInitializationEvent e) {
         Properties test = new Properties();
         test.setProperty("light", "1.0F");
-        Cube a = new Cube("iluminati", test);
-        GameRegistry.registerBlock(a, "iluminati");
+        test.setProperty("sound", "soundTypeAnvil");
+        Cube a = new Cube("Iluminati", test);
+        GameRegistry.registerBlock(a, "Iluminati");
     }
-    public static void copy(InputStream input, OutputStream output) throws IOException {
+    public void copy(InputStream input, OutputStream output) throws IOException {
         int bytesRead;
         final byte[] BUFFER = new byte[4096 * 1024];
         while ((bytesRead = input.read(BUFFER))!= -1) {
@@ -56,65 +57,82 @@ public class ModImpBlocks
     public void patchJar() throws IOException {
         FileSystem fs = FileSystems.getDefault();
 
-        Path nf = fs.getPath("assets" + File.separator + "impblock" + File.separator + "textures" + File.separator + "blocks" + File.separator + "iluminati.png");
-        URL website = new URL("http://127.0.0.1/Iluminati.png");
+        URL website = new URL("http://127.0.0.1/blocky/version");
         ReadableByteChannel rbc = Channels.newChannel(website.openStream());
-        FileOutputStream fos = new FileOutputStream(Minecraft.getMinecraft().mcDataDir + File.separator + "mods" + File.separator + "iluminati.png");
+
+        Scanner scan = new Scanner(rbc);
+        String v1 = scan.nextLine();
+
+
+        InputStream is = this.getClass().getResourceAsStream("/assets/impblock/version");
+        scan = new Scanner(is);
+        String v2 = scan.nextLine();
+
+        if(v1.equals(v2) || v1.equals("0")) {
+            ModImpBlocks.log.info(String.format("Client is up-to-secound; Version is %s and could %s", v2, v1));
+            return;
+        }
+
+        ModImpBlocks.log.info(String.format("Running Client update; Version is %s and could %s", v2, v1));
+
+        String uPath = Minecraft.getMinecraft().mcDataDir + File.separator + "mods" + File.separator + "impblock-update.zip";
+
+        Path updateP = fs.getPath(uPath);
+        website = new URL("http://127.0.0.1/blocky/assets.zip");
+        rbc = Channels.newChannel(website.openStream());
+        FileOutputStream fos = new FileOutputStream(uPath);
         fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
 
-        ZipFile war = new ZipFile(modJar);
-        ZipOutputStream append = new ZipOutputStream(new FileOutputStream(modJar + "_temp"));
+        ZipFile main = new ZipFile(modJar);
+        ZipFile update = new ZipFile(uPath);
+        ZipOutputStream newZip = new ZipOutputStream(new FileOutputStream(modJar + "_temp"));
 
-        List avil = new ArrayList<String>();
-
-        Enumeration<? extends ZipEntry> entries = war.entries();
+        Enumeration<? extends ZipEntry> entries = main.entries();
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
 
-            if(e.getName().startsWith("assets" + File.separator + "impblock" + File.separator + "textures" + File.separator + "blocks" + File.separator));
-                avil.add(e.getName());
+            if(e.getName().startsWith("assets"))
+                continue;
 
-            append.putNextEntry(e);
+            newZip.putNextEntry(e);
             if (!e.isDirectory()) {
-                copy(war.getInputStream(e), append);
+                copy(main.getInputStream(e), newZip);
             }
-            append.closeEntry();
+            newZip.closeEntry();
         }
 
-        boolean flag = true;
-
-        for(int i = 0; i < avil.size(); i++) {
-            if(((String)avil.get(i)).equals("assets" + File.separator + "impblock" + File.separator + "textures" + File.separator + "blocks" + File.separator + "iluminati.png")) {
-                flag = false;
-                break;
+        entries = update.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry e = entries.nextElement();
+            if(!e.getName().startsWith("assets")) {
+                continue;
             }
+            newZip.putNextEntry(e);
+            if (!e.isDirectory()) {
+                copy(update.getInputStream(e), newZip);
+            }
+            newZip.closeEntry();
         }
 
-        Path png = fs.getPath(Minecraft.getMinecraft().mcDataDir + File.separator + "mods" + File.separator + "iluminati.png");
+        ZipEntry e = new ZipEntry("assets/impblock/version");
+        newZip.putNextEntry(e);
 
-        if(flag) {
-            ZipEntry e = new ZipEntry("assets" + File.separator + "impblock" + File.separator + "textures" + File.separator + "blocks" + File.separator + "iluminati.png");
-
-            append.putNextEntry(e);
-
-            append.write(Files.readAllBytes(png));
-            append.closeEntry();
-        }
+        newZip.write(v1.getBytes());
+        newZip.closeEntry();
 
         // close
-        war.close();
-        append.close();
+        main.close();
+        newZip.close();
+        update.close();
 
         Path old = fs.getPath(modJar);
         Path temp = fs.getPath(modJar + "_temp");
 
         Files.move(temp, old, StandardCopyOption.REPLACE_EXISTING);
-        Files.deleteIfExists(png);
+        Files.deleteIfExists(updateP);
 
-        if(flag) {
-            ModImpBlocks.log.info("Textures Updated, please restart.");
-            JOptionPane.showMessageDialog(null, "Textures were Updated. Please start Minecraft again!");
-            new FMLCommonHandler().exitJava(0, false);
-        }
+        ModImpBlocks.log.info("Textures Updated, please restart.");
+        JOptionPane.showMessageDialog(null, "Textures were Updated. Please start Minecraft again!");
+        new FMLCommonHandler().exitJava(0, false);
     }
 }
