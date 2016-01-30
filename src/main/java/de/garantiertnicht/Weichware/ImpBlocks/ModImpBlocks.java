@@ -6,7 +6,14 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 import de.garantiertnicht.Weichware.ImpBlocks.BaseBlocks.Cube;
+import de.garantiertnicht.Weichware.ImpBlocks.BaseBlocks.Light;
+import de.garantiertnicht.Weichware.ImpBlocks.Items.LightItem;
+import de.garantiertnicht.Weichware.ImpBlocks.Items.LightRemoveItem;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
 
 import javax.swing.*;
 import java.io.*;
@@ -28,6 +35,10 @@ public class ModImpBlocks
 
     private String modJar;
 
+    public static Block light;
+    public static LightItem lightOn;
+    public static LightRemoveItem lightOff;
+
     public static org.apache.logging.log4j.Logger log;
 
     @Mod.EventHandler
@@ -44,8 +55,32 @@ public class ModImpBlocks
         test.setProperty("light", "1.0F");
         test.setProperty("sound", "soundTypeAnvil");
         Cube a = new Cube("Iluminati", test);
+
+
         GameRegistry.registerBlock(a, "Iluminati");
+
+        light = new Light();
+        GameRegistry.registerBlock(light, "light");
+
+        lightOn = new LightItem();
+        lightOff = new LightRemoveItem();
+
+        GameRegistry.registerItem(lightOn, "lightOn");
+        GameRegistry.registerItem(lightOff, "lightOff");
+
+        //Glowstone in the middle and the edges, Glass in the free slots
+        GameRegistry.addShapedRecipe(new ItemStack(lightOn, 2), "OgO", "gOg", "OgO", 'O', Blocks.glowstone, 'g', Blocks.glass);
+
+        //Glowstine in the middle, sorounded by Cleanstone
+        GameRegistry.addShapedRecipe(new ItemStack(lightOff, 1), "SSS", "SOS", "SSS", 'S', Blocks.stone, 'O', Blocks.glowstone);
     }
+
+    /*
+
+            HILFSFUNKTIONEN
+
+     */
+
     public void copy(InputStream input, OutputStream output) throws IOException {
         int bytesRead;
         final byte[] BUFFER = new byte[4096 * 1024];

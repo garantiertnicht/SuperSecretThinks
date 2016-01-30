@@ -14,7 +14,7 @@ public class Cube extends Block {
         setStepSound(Block.soundTypeStone);
         setBlockName(name);
         setCreativeTab(CreativeTabs.tabBlock);
-        setBlockTextureName(String.format("generic:%s", name));
+        setBlockTextureName(String.format("%s:%s", ModImpBlocks.MODID, name));
     }
 
     public Cube(String name, Properties props) {
