@@ -116,7 +116,6 @@ public class ModImpBlocks
             jvm_location = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         }
 
-        log.info(Minecraft.getMinecraft().mcDataDir.getPath());
         Runtime.getRuntime().exec(new String[] {jvm_location, "-jar", Minecraft.getMinecraft().mcDataDir + File.separator + "AssetsLoader.jar", Minecraft.getMinecraft().mcDataDir.getPath(), "http://blocks.imperium1871.de/assets.zip", "ImpBlocks", "impblock", v1, String.valueOf(true)});
         new FMLCommonHandler().exitJava(0, false);
     }
