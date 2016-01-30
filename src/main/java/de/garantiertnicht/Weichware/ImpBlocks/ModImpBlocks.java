@@ -92,7 +92,7 @@ public class ModImpBlocks
     public void patchJar() throws IOException {
         FileSystem fs = FileSystems.getDefault();
 
-        URL website = new URL("http://127.0.0.1/blocky/version");
+        URL website = new URL("http://blocks.imperium1871.de/version");
         ReadableByteChannel rbc = Channels.newChannel(website.openStream());
 
         Scanner scan = new Scanner(rbc);
@@ -109,65 +109,15 @@ public class ModImpBlocks
         }
 
         ModImpBlocks.log.info(String.format("Running Client update; Version is %s and could %s", v2, v1));
-
-        String uPath = Minecraft.getMinecraft().mcDataDir + File.separator + "mods" + File.separator + "impblock-update.zip";
-
-        Path updateP = fs.getPath(uPath);
-        website = new URL("http://127.0.0.1/blocky/assets.zip");
-        rbc = Channels.newChannel(website.openStream());
-        FileOutputStream fos = new FileOutputStream(uPath);
-        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-
-        ZipFile main = new ZipFile(modJar);
-        ZipFile update = new ZipFile(uPath);
-        ZipOutputStream newZip = new ZipOutputStream(new FileOutputStream(modJar + "_temp"));
-
-        Enumeration<? extends ZipEntry> entries = main.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry e = entries.nextElement();
-
-            if(e.getName().startsWith("assets"))
-                continue;
-
-            newZip.putNextEntry(e);
-            if (!e.isDirectory()) {
-                copy(main.getInputStream(e), newZip);
-            }
-            newZip.closeEntry();
+        String jvm_location;
+        if (System.getProperty("os.name").startsWith("Win")) {
+            jvm_location = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java.exe";
+        } else {
+            jvm_location = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         }
 
-        entries = update.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry e = entries.nextElement();
-            if(!e.getName().startsWith("assets")) {
-                continue;
-            }
-            newZip.putNextEntry(e);
-            if (!e.isDirectory()) {
-                copy(update.getInputStream(e), newZip);
-            }
-            newZip.closeEntry();
-        }
-
-        ZipEntry e = new ZipEntry("assets/impblock/version");
-        newZip.putNextEntry(e);
-
-        newZip.write(v1.getBytes());
-        newZip.closeEntry();
-
-        // close
-        main.close();
-        newZip.close();
-        update.close();
-
-        Path old = fs.getPath(modJar);
-        Path temp = fs.getPath(modJar + "_temp");
-
-        Files.move(temp, old, StandardCopyOption.REPLACE_EXISTING);
-        Files.deleteIfExists(updateP);
-
-        ModImpBlocks.log.info("Textures Updated, please restart.");
-        JOptionPane.showMessageDialog(null, "Textures were Updated. Please start Minecraft again!");
+        log.info(Minecraft.getMinecraft().mcDataDir.getPath());
+        Runtime.getRuntime().exec(new String[] {jvm_location, "-jar", Minecraft.getMinecraft().mcDataDir + File.separator + "AssetsLoader.jar", Minecraft.getMinecraft().mcDataDir.getPath(), "http://blocks.imperium1871.de/assets.zip", "ImpBlocks", "impblock", v1, String.valueOf(true)});
         new FMLCommonHandler().exitJava(0, false);
     }
 }
