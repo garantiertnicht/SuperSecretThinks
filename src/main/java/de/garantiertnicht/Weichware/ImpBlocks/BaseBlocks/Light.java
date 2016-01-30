@@ -14,6 +14,6 @@ public class Light extends BlockAir {
     public Light() {
         super();
         setLightLevel(1);
-        setBlockName("light");
+        setBlockName("lightblock");
     }
 }
